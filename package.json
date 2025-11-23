@@ -1,0 +1,37 @@
+{
+  "name": "febric-flow-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "server": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sarakts28/febric-flow-backend.git"
+  },
+  "keywords": [],
+  "author": "Sara Khurshid",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sarakts28/febric-flow-backend/issues"
+  },
+  "homepage": "https://github.com/sarakts28/febric-flow-backend#readme",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "colors": "^1.4.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10"
+  }
+}

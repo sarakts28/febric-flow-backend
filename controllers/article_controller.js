@@ -4,7 +4,11 @@ import createError from "../utilies/errorHandle.js";
 import mongoose from "mongoose";
 import getEnumErrorMessage from "../utilies/getEnumErrorMessage.js";
 import { ARTICLE_ENUM_VALUES } from "../constant/enum_contants.js";
-import { createdResponse, noContentResponse, successResponse } from "../utilies/responseHandler.js";
+import {
+  createdResponse,
+  noContentResponse,
+  successResponse,
+} from "../utilies/responseHandler.js";
 
 // @desc    Create article
 // @route   POST /api/article
@@ -117,11 +121,9 @@ const createArticle = asyncHandler(async (req, res) => {
       fabric_type,
       measurement_type,
       total_quantity,
-      designer_name: designer_name
-        ? designer_name
-        : req.user.userType === "designer"
-        ? req.user.name
-        : "",
+      designer_name:
+        designer_name ||
+        (req.user.userType === "designer" ? req.user.name : ""),
       price,
       status,
     });
@@ -188,7 +190,6 @@ const getAllArticles = asyncHandler(async (req, res) => {
     ];
   }
 
-
   // ✅ FIXED: Proper MongoDB pagination (not JavaScript slicing)
   const skip = (page - 1) * page_limit;
 
@@ -203,7 +204,10 @@ const getAllArticles = asyncHandler(async (req, res) => {
 
   // Check if requested page exceeds total pages
   if (page > 1 && page > totalPages) {
-    throw createError(`Page ${page} does not exist. Maximum page is ${totalPages+1}`, 400);
+    throw createError(
+      `Page ${page} does not exist. Maximum page is ${totalPages + 1}`,
+      400
+    );
   }
 
   // Format response
@@ -246,12 +250,7 @@ const getAllArticles = asyncHandler(async (req, res) => {
     },
   };
 
-  return successResponse(
-    res,
-    "Articles fetched successfully",
-    data,
-  );
-
+  return successResponse(res, "Articles fetched successfully", data);
 });
 
 // @desc    Get single article
@@ -269,11 +268,7 @@ const getSingleArticle = asyncHandler(async (req, res) => {
     throw createError("Article not found", 404);
   }
 
-  return successResponse(
-    res,
-    "Article fetched successfully",
-    article,
-  );
+  return successResponse(res, "Article fetched successfully", article);
 });
 
 // @desc  Get only raw articles
@@ -292,7 +287,7 @@ const getRawArticles = asyncHandler(async (req, res) => {
   return successResponse(
     res,
     "Articles with status 'raw' fetched successfully",
-    data,
+    data
   );
 });
 
@@ -313,9 +308,21 @@ const updateArticle = asyncHandler(async (req, res) => {
     throw createError("Request body is required", 400);
   }
 
-  const { article_images, status, active_status, total_stores_assigned, total_quantity_dispatched } = req.body;
+  const {
+    article_images,
+    status,
+    active_status,
+    total_stores_assigned,
+    total_quantity_dispatched,
+  } = req.body;
 
-  const onlyKeys = ["status", "active_status", "article_images", "total_stores_assigned", "total_quantity_dispatched"];
+  const onlyKeys = [
+    "status",
+    "active_status",
+    "article_images",
+    "total_stores_assigned",
+    "total_quantity_dispatched",
+  ];
 
   const keys = Object.keys(req.body);
 
@@ -353,11 +360,7 @@ const updateArticle = asyncHandler(async (req, res) => {
     runValidators: true,
   });
 
-  return successResponse(
-    res,
-    "Article updated successfully",
-    article,
-  );
+  return successResponse(res, "Article updated successfully", article);
 });
 
 // @desc    Delete article
@@ -380,10 +383,7 @@ const deleteArticle = asyncHandler(async (req, res) => {
 
   article = await Article.findByIdAndDelete(req.params.id);
 
-  return noContentResponse(
-    res,
-    "Article deleted successfully",
-  );
+  return noContentResponse(res, "Article deleted successfully");
 });
 
 export {

@@ -4,7 +4,7 @@ import { configDotenv } from "dotenv";
 import errorHandleMiddleware from "./middleware/errorMiddleWare.js";
 import validationErrorHandler from "./middleware/validationMiddleware.js";
 import connectDB from "./config/db.js";
-import { userRoutes, articleDesignRoutes, planningRouteRoutes, clientRoutes } from "./routes/index.js";
+import { userRoutes, articleDesignRoutes, planningRouteRoutes, clientRoutes, articlePlanningRoutes } from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 configDotenv();
@@ -15,9 +15,10 @@ const port = process.env.PORT || 5000; // Add default port
 const app = express();
 
 app.use(cors({
-  origin: "*",
+  origin: "http://localhost:5173",
   credentials: true,
 }));
+
 
 
 app.use(cookieParser());
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(endPoints.articleDesign, articleDesignRoutes);
 app.use(endPoints.planningRoute, planningRouteRoutes);
 app.use(endPoints.clients, clientRoutes);
+app.use(endPoints.articlePlanning, articlePlanningRoutes);
 app.use('/api', userRoutes);
 
 

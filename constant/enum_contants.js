@@ -21,4 +21,8 @@ export const planningRouteEnumValues = {
   PLANNING_ROUTE_TYPES: ["dyeing", "printing", "embroidery"],
 };
 
+export const articlePlanningEnumValues = {
+  STATUS_TYPES: ["Pending", "In Progress", "Completed"],
+};
+
 

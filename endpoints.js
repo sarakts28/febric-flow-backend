@@ -5,7 +5,8 @@ const endPoints = {
     me: "/api/me",
     articleDesign: "/api/article",
     planningRoute: "/api/planning-route",
-    clients: "/api/client"
+    clients: "/api/client",
+    articlePlanning: "/api/article-planning"
   };
   
   export default endPoints;
