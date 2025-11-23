@@ -14,6 +14,11 @@ const articleSchema = new mongoose.Schema({
         trim: true,
         maxlength: [50, "Article number cannot exceed 50 characters"]
     },
+    category_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+    },
     article_name: {
         type: String,
         required: [true, "Article name is required"],
@@ -41,14 +46,6 @@ const articleSchema = new mongoose.Schema({
             default: false
         }
     }],
-    category_type: {
-        type: String,
-        required: true,
-        enum: {
-            values: ARTICLE_ENUM_VALUES.CATEGORY_TYPES,
-            message: '{VALUE} is not a valid category'
-        }
-    },
     fabric_type: {
         type: String,
         required: true,

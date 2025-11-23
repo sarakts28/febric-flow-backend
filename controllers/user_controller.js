@@ -5,7 +5,7 @@ import createError from "../utilies/errorHandle.js";
 import {
   generateAuthToken,
   generateRefreshToken,
-} from "../utilies/generateToken.js";
+} from "../utilies/generateToken.js"; 
 import jwt from "jsonwebtoken";
 
 // @desc    Register new user

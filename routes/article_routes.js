@@ -9,6 +9,7 @@ import {
 } from "../controllers/article_controller.js";
 import protect from "../middleware/authMiddleware.js";
 import checkRole from "../middleware/roleMiddleware.js";
+import uploadMiddleware from "../middleware/uploadMiddleware.js";
 import { roleEnumValues } from "../constant/enum_contants.js";
 
 const router = express.Router();
@@ -20,7 +21,7 @@ const adminAndDesigner = checkRole([roleEnumValues.ROLE_TYPES[0], roleEnumValues
 router.use(protect, adminAndDesigner);
 
 router.post("/", createArticle);
-router.patch("/:id", updateArticle);
+router.patch("/:id", uploadMiddleware.array("article_images", 10), updateArticle);
 router.get("/", getAllArticles);
 router.get("/raw", getRawArticles);
 router.get("/:id", getSingleArticle);

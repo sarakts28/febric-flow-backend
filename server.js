@@ -27,6 +27,9 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// uploads
+app.use("/uploads", express.static("uploads"));
+
 // Routes
 app.use(endPoints.articleDesign, articleDesignRoutes);
 app.use(endPoints.planningRoute, planningRouteRoutes);

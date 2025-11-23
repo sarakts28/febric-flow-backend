@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Article from "../models/article_modal.js";
+import Category from "../models/category_modal.js";
 import createError from "../utilies/errorHandle.js";
 import mongoose from "mongoose";
 import getEnumErrorMessage from "../utilies/getEnumErrorMessage.js";
@@ -23,7 +24,7 @@ const createArticle = asyncHandler(async (req, res) => {
     article_no,
     article_name,
     article_description,
-    category_type,
+    category_id,
     fabric_type,
     measurement_type,
     total_quantity,
@@ -38,7 +39,7 @@ const createArticle = asyncHandler(async (req, res) => {
     "article_no",
     "article_name",
     "article_description",
-    "category_type",
+    "category_id",
     "fabric_type",
     "measurement_type",
     "total_quantity",
@@ -55,17 +56,11 @@ const createArticle = asyncHandler(async (req, res) => {
 
   // Pre-validate enum values with detailed error messages
   if (
-    category_type &&
-    !ARTICLE_ENUM_VALUES.CATEGORY_TYPES.includes(category_type)
+    category_id &&
+    ((category_id !== "" && !mongoose.Types.ObjectId.isValid(category_id)) ||
+      !(await Category.findById(category_id)))
   ) {
-    throw createError(
-      getEnumErrorMessage(
-        "Category type",
-        category_type,
-        ARTICLE_ENUM_VALUES.CATEGORY_TYPES
-      ),
-      400
-    );
+    throw createError("Invalid Category ID", 400);
   }
 
   if (fabric_type && !ARTICLE_ENUM_VALUES.FABRIC_TYPES.includes(fabric_type)) {
@@ -117,7 +112,7 @@ const createArticle = asyncHandler(async (req, res) => {
       article_name,
       article_description,
       article_images,
-      category_type,
+      category_id,
       fabric_type,
       measurement_type,
       total_quantity,
@@ -209,7 +204,7 @@ const getAllArticles = asyncHandler(async (req, res) => {
       400
     );
   }
-
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
   // Format response
   const formattedArticles = articles.map((article) => ({
     user_info: {
@@ -224,7 +219,10 @@ const getAllArticles = asyncHandler(async (req, res) => {
       article_name: article.article_name,
       article_description: article.article_description,
       active_status: article.active_status,
-      article_images: article.article_images,
+      article_images: (article.article_images || []).map((img) => ({
+        url: `${baseUrl}${img.url}`,
+        is_primary: img.is_primary,
+      })),
       category_type: article.category_type,
       designer_name: article.designer_name,
       fabric_type: article.fabric_type,
@@ -264,11 +262,20 @@ const getSingleArticle = asyncHandler(async (req, res) => {
 
   const article = await Article.findById(req.params.id);
 
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+
   if (!article) {
     throw createError("Article not found", 404);
   }
 
-  return successResponse(res, "Article fetched successfully", article);
+  const articleWithUrls = {
+    ...article._doc,
+    article_images: (article.article_images || []).map((img) => ({
+      url: `${baseUrl}${img.url}`,
+      is_primary: img.is_primary,
+    })),
+  };
+  return successResponse(res, "Article fetched successfully", articleWithUrls);
 });
 
 // @desc  Get only raw articles
@@ -295,47 +302,36 @@ const getRawArticles = asyncHandler(async (req, res) => {
 //@route   PUT /api/article/:id
 //@access  Private
 const updateArticle = asyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    throw createError("Article id is required", 400);
+  const { id } = req.params;
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw createError("Invalid article ID", 400);
   }
 
-  // Check if the ID is a valid MongoDB ObjectId
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    throw createError("Invalid article ID format", 400);
+  let article = await Article.findById(id);
+  if (!article) {
+    throw createError("Article not found", 404);
   }
 
-  if (!req.body) {
-    throw createError("Request body is required", 400);
-  }
-
-  const {
-    article_images,
-    status,
-    active_status,
-    total_stores_assigned,
-    total_quantity_dispatched,
-  } = req.body;
-
-  const onlyKeys = [
+  // Only allowed fields to update
+  const allowedKeys = [
     "status",
     "active_status",
-    "article_images",
     "total_stores_assigned",
     "total_quantity_dispatched",
   ];
-
   const keys = Object.keys(req.body);
 
-  if (keys.some((key) => !onlyKeys.includes(key))) {
+  if (keys.some((key) => !allowedKeys.includes(key))) {
     throw createError(
-      "Only status, active_status, total_stores_assigned, total_quantity_dispatched and article_images are allowed to update",
+      "Only status, active_status, total_stores_assigned, total_quantity_dispatched are allowed to update",
       400
     );
   }
 
+  // Check if active_status is false but status is not Finished
   if (
-    active_status === "false" &&
-    status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[2]
+    req.body.active_status === "false" &&
+    req.body.status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[2]
   ) {
     throw createError(
       "Article status must be Finished because active status is false",
@@ -343,19 +339,26 @@ const updateArticle = asyncHandler(async (req, res) => {
     );
   }
 
-  let article = await Article.findById(req.params.id);
-  if (!article) {
-    throw createError("Article not found", 404);
+  // Handle uploaded images
+  let uploadedImages = [];
+  if (req.files && req.files.length > 0) {
+    uploadedImages = req.files.map((file) => ({
+      url: `/uploads/articles/${file.filename}`,
+      is_primary: article.article_images?.length === 0 ? true : false, // First image as primary
+    }));
   }
 
-  if (
-    status === ARTICLE_ENUM_VALUES.STATUS_TYPES[1] &&
-    (article_images?.length === 0 || !article_images)
-  ) {
-    throw createError("Article image is required", 400);
+  // Merge existing images with new ones
+  const updates = { ...req.body };
+  if (uploadedImages.length > 0) {
+    updates.article_images = [
+      ...(article.article_images || []),
+      ...uploadedImages,
+    ];
   }
 
-  article = await Article.findByIdAndUpdate(req.params.id, req.body, {
+  // Update the article
+  article = await Article.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
   });
