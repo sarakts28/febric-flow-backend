@@ -197,3 +197,32 @@ export const getAllArticlePlannings = async (req, res) => {
     throw createError(error.message, 500);
   }
 };
+
+export const getArticlePlanningById = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw createError("Invalid article planning id", 400);
+  }
+
+  const articlePlanning = await ArticlePlanning.findById(id);
+
+  if (!articlePlanning) {
+    throw createError("Article planning not found", 404);
+  }
+
+  if (articlePlanning.when_process_end < Date.now()) {
+    articlePlanning.late = true;
+  }
+
+  if (articlePlanning.order_slip === "Received") {
+    articlePlanning.status = articlePlanningEnumValues.STATUS_TYPES[2];
+  }
+
+  return sendResponse(
+    res,
+    200,
+    "Article planning fetched successfully",
+    articlePlanning
+  );
+}

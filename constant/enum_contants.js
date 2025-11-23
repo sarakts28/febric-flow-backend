@@ -25,4 +25,8 @@ export const articlePlanningEnumValues = {
   STATUS_TYPES: ["Pending", "In Progress", "Completed"],
 };
 
+export const CategoryEnumValues = {
+  SEASON_TYPES: ["Spring", "Summer", "Autumn", "Winter", "Mid-Summer", "Mid-Winter","Mix"],
+};
+
 

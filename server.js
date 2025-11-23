@@ -4,7 +4,7 @@ import { configDotenv } from "dotenv";
 import errorHandleMiddleware from "./middleware/errorMiddleWare.js";
 import validationErrorHandler from "./middleware/validationMiddleware.js";
 import connectDB from "./config/db.js";
-import { userRoutes, articleDesignRoutes, planningRouteRoutes, clientRoutes, articlePlanningRoutes } from "./routes/index.js";
+import { userRoutes, articleDesignRoutes, planningRouteRoutes,  category_routes, articlePlanningRoutes } from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 configDotenv();
@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 // Routes
 app.use(endPoints.articleDesign, articleDesignRoutes);
 app.use(endPoints.planningRoute, planningRouteRoutes);
-app.use(endPoints.clients, clientRoutes);
+app.use(endPoints.category, category_routes);
 app.use(endPoints.articlePlanning, articlePlanningRoutes);
 app.use('/api', userRoutes);
 

@@ -5,7 +5,7 @@ const endPoints = {
     me: "/api/me",
     articleDesign: "/api/article",
     planningRoute: "/api/planning-route",
-    clients: "/api/client",
+    category: "/api/category",
     articlePlanning: "/api/article-planning"
   };
   
