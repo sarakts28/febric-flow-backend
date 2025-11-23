@@ -12,9 +12,11 @@ import jwt from "jsonwebtoken";
 // @route   POST /api/register
 // @access  Public
 const register = asyncHandler(async (req, res) => {
-const type = ["admin","accountant","store keeper","cashier", "designer"];
+  const type = ["admin", "accountant", "store keeper", "cashier", "designer"];
 
-  if (!req.body) {
+  console.log("Body:", req.body);
+
+  if (Object.keys(req.body).length === 0) {
     throw createError("Request body is required", 400);
   }
   const { name, email, password, userType } = req.body;
@@ -27,8 +29,11 @@ const type = ["admin","accountant","store keeper","cashier", "designer"];
     throw createError("User already exists", 400);
   }
 
-  if(!type.includes(userType)){
-    throw createError("Invalid user type. User type can be admin, accountant, store keeper, cashier, designer", 400);
+  if (!type.includes(userType)) {
+    throw createError(
+      "Invalid user type. User type can be admin, accountant, store keeper, cashier, designer",
+      400
+    );
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -49,7 +54,7 @@ const type = ["admin","accountant","store keeper","cashier", "designer"];
       user: {
         username: user.name,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
       },
     });
   }
@@ -103,7 +108,7 @@ const login = asyncHandler(async (req, res) => {
     user: {
       username: user.name,
       email: user.email,
-      userType: user.userType
+      userType: user.userType,
     },
     // You can remove accessToken from response body if using cookies
     // accessToken: token,
@@ -152,15 +157,12 @@ const logout = asyncHandler(async (req, res) => {
   });
 });
 
-
-
-
 // @desc    Get current user
 // @route   GET /api/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
   const { _id, name, email, userType } = await User.findById(req.user.id);
-  console.log(userType,"userType")
+  console.log(userType, "userType");
   res.status(200).json({
     success: true,
     message: "User fetched successfully",
@@ -168,7 +170,7 @@ const getMe = asyncHandler(async (req, res) => {
       id: _id,
       name,
       email,
-      userType
+      userType,
     },
   });
 });

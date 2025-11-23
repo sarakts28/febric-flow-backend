@@ -1,10 +1,17 @@
 {
   "name": "febric-flow-backend",
   "version": "1.0.0",
+<<<<<<< HEAD
   "main": "server.js",
   "type": "module",
   "scripts": {
     "server": "nodemon server.js",
+=======
+  "description": "",
+  "main": "endpoints.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+>>>>>>> a634010fa88900099455f55ff17baf3f587f133d
     "start": "node server.js"
   },
   "repository": {
@@ -12,26 +19,43 @@
     "url": "git+https://github.com/sarakts28/febric-flow-backend.git"
   },
   "keywords": [],
+<<<<<<< HEAD
   "author": "Sara Khurshid",
   "license": "ISC",
+=======
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+>>>>>>> a634010fa88900099455f55ff17baf3f587f133d
   "bugs": {
     "url": "https://github.com/sarakts28/febric-flow-backend/issues"
   },
   "homepage": "https://github.com/sarakts28/febric-flow-backend#readme",
+<<<<<<< HEAD
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "colors": "^1.4.0",
+=======
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+>>>>>>> a634010fa88900099455f55ff17baf3f587f133d
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
+<<<<<<< HEAD
     "mongoose": "^8.19.1"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+=======
+    "mongoose": "^8.19.3"
+  },
+  "devDependencies": {
+>>>>>>> a634010fa88900099455f55ff17baf3f587f133d
     "nodemon": "^3.1.10"
   }
 }
