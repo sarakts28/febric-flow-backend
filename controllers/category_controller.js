@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Category from "../models/category_modal.js";
 import createError from "../utilies/errorHandle.js";
 import { createdResponse, noContentResponse, successResponse } from "../utilies/responseHandler.js";
+import { CategoryEnumValues } from "../constant/enum_contants.js";
 
 // @desc    Create a new Category
 // @route   POST /api/Category
@@ -18,8 +19,8 @@ export const createCategory = async (req, res) => {
     throw createError("Category name and season are required", 400);
     }
 
-    const Category = await Category.findOne({ category_name });
-    if(Category)
+    const findCategory = await Category.findOne({ category_name });
+    if(findCategory)
     {
     throw createError("Category already exists", 400);
     }
@@ -30,9 +31,9 @@ export const createCategory = async (req, res) => {
       throw createError("Invalid season only " + CategoryEnumValues.SEASON_TYPES.join(", ") + " are allowed", 400);
     }
     try {
-        const Category = new Category({ category_name, category_season, user: req.user._id });
-        await Category.save();
-        return createdResponse(res, Category);
+        const newCategory = new Category({ category_name, category_season, user: req.user._id });
+        await newCategory.save();
+        return createdResponse(res, newCategory);
     } catch (error) {
         throw createError(error.message, 500);
     }
@@ -82,6 +83,7 @@ export const getAllCategorys = async (req, res) => {
     
     return successResponse(res,"Categorys fetched successfully", data);
 }
+
 // @desc get all categories without pagination
 // @route GET /api/Category/all
 // @access Private
