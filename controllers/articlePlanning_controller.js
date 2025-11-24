@@ -110,6 +110,11 @@ export const createArticlePlanning = async (req, res) => {
     status = articlePlanningEnumValues.STATUS_TYPES[0];
   }
 
+  // updating article status to 'underProcess'
+  if (article.status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[1]) {
+    article.status = ARTICLE_ENUM_VALUES.STATUS_TYPES[1];
+    await article.save();
+  }
   try {
     const articlePlanning = await ArticlePlanning.create({
       article_id,
@@ -132,38 +137,31 @@ export const getAllArticlePlannings = async (req, res) => {
   let page_limit = parseInt(req.query.limit) || 10;
   let page = parseInt(req.query.page) || 1;
 
-
-
   // ✅ AND Logic: All query parameters must match
-  const { status, order_slip, search, article_id, planningRoute_id } = req.query;
+  const { status, order_slip, search, article_id, planningRoute_id } =
+    req.query;
 
-  if(article_id)
-  {
+  if (article_id) {
     filter.article_id = article_id;
   }
 
-  if(planningRoute_id)
-  {
+  if (planningRoute_id) {
     filter.planningRoute_id = planningRoute_id;
   }
 
-  if(status)
-  {
+  if (status) {
     filter.status = status;
   }
 
-  if(order_slip)
-  {
+  if (order_slip) {
     filter.order_slip = order_slip;
   }
 
-  if(search)
-  {
+  if (search) {
     filter.$or = [
       { article_id: { $regex: search, $options: "i" } },
       { planningRoute_id: { $regex: search, $options: "i" } },
       { planningName: { $regex: search, $options: "i" } },
-      
     ];
   }
 
@@ -179,9 +177,26 @@ export const getAllArticlePlannings = async (req, res) => {
         articlePlanningItem.status = articlePlanningEnumValues.STATUS_TYPES[2];
       }
 
-      if(articlePlanningItem.status === articlePlanningEnumValues.STATUS_TYPES[2] && articlePlanningItem.order_slip === "Issued")
-      {
+      if (
+        articlePlanningItem.status === articlePlanningEnumValues.STATUS_TYPES[0]
+      ) {
+        if (articlePlanningItem.when_process_start === Date.now()) {
+          articlePlanningItem.status =
+            articlePlanningEnumValues.STATUS_TYPES[1];
+        }
+      }
+
+      if (
+        articlePlanningItem.status ===
+          articlePlanningEnumValues.STATUS_TYPES[2] &&
+        articlePlanningItem.order_slip === "Issued"
+      ) {
         articlePlanningItem.order_slip = "Received";
+        const articleInProcess = Article.findById(
+          articlePlanningItem.article_id
+        );
+        articleInProcess.status = ARTICLE_ENUM_VALUES.STATUS_TYPES[3];
+        articleInProcess.save();
       }
 
       return articlePlanningItem;
@@ -215,8 +230,19 @@ export const getArticlePlanningById = async (req, res) => {
     articlePlanning.late = true;
   }
 
+  if (
+    articlePlanningItem.status === articlePlanningEnumValues.STATUS_TYPES[0]
+  ) {
+    if (articlePlanningItem.when_process_start === Date.now()) {
+      articlePlanningItem.status = articlePlanningEnumValues.STATUS_TYPES[1];
+    }
+  }
+
   if (articlePlanning.order_slip === "Received") {
     articlePlanning.status = articlePlanningEnumValues.STATUS_TYPES[2];
+    const articleInProcess = Article.findById(articlePlanningItem.article_id);
+    articleInProcess.status = ARTICLE_ENUM_VALUES.STATUS_TYPES[3];
+    articleInProcess.save();
   }
 
   return sendResponse(
@@ -225,4 +251,4 @@ export const getArticlePlanningById = async (req, res) => {
     "Article planning fetched successfully",
     articlePlanning
   );
-}
+};
