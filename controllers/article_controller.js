@@ -158,7 +158,7 @@ const getAllArticles = asyncHandler(async (req, res) => {
   }
 
   // ✅ AND Logic: All query parameters must match
-  const { status, article_no, fabric_type, category_type, search } = req.query;
+  const { status, article_no, fabric_type, search } = req.query;
 
   if (status) {
     filter.status = status;
@@ -172,14 +172,10 @@ const getAllArticles = asyncHandler(async (req, res) => {
     filter.fabric_type = fabric_type;
   }
 
-  if (category_type) {
-    filter.category_type = category_type;
-  }
 
   // ✅ Search across multiple fields (OR logic within AND)
   if (search) {
     filter.$or = [
-      { article_no: { $regex: search, $options: "i" } },
       { article_name: { $regex: search, $options: "i" } },
       { designer_name: { $regex: search, $options: "i" } },
     ];
