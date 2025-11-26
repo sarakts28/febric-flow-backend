@@ -172,7 +172,6 @@ const getAllArticles = asyncHandler(async (req, res) => {
     filter.fabric_type = fabric_type;
   }
 
-
   // ✅ Search across multiple fields (OR logic within AND)
   if (search) {
     filter.$or = [
@@ -226,6 +225,8 @@ const getAllArticles = asyncHandler(async (req, res) => {
       price: article.price,
       status: article.status,
       total_quantity: article.total_quantity,
+      total_stores_assigned: article.total_stores_assigned,
+      total_quantity_dispatched: article.total_quantity_dispatched,
       createdAt: article.createdAt,
       updatedAt: article.updatedAt,
     },
@@ -326,7 +327,7 @@ const updateArticle = asyncHandler(async (req, res) => {
 
   // Check if active_status is false but status is not Finished
   if (
-    req.body.active_status === "false" &&
+    req.body.active_status === false &&
     req.body.status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[2]
   ) {
     throw createError(
@@ -366,21 +367,20 @@ const updateArticle = asyncHandler(async (req, res) => {
 // @route   DELETE /api/article/:id
 // @access  Private
 const deleteArticle = asyncHandler(async (req, res) => {
-  if (!req.params.id) {
+  const { id } = req.params;
+  if (!id) {
     throw createError("Article id is required", 400);
   }
 
   // Check if the ID is a valid MongoDB ObjectId
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     throw createError("Invalid article ID format", 400);
   }
 
-  let article = await Article.findById(req.params.id);
+  const article = await Article.findByIdAndDelete(id);
   if (!article) {
     throw createError("Article not found", 404);
   }
-
-  article = await Article.findByIdAndDelete(req.params.id);
 
   return noContentResponse(res, "Article deleted successfully");
 });
