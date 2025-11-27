@@ -14,10 +14,17 @@ export const planningRouteEnumValues = {
 
 export const articlePlanningEnumValues = {
   STATUS_TYPES: ["Pending", "In Progress", "Completed"],
+  ORDER_SLIP_TYPES: ["Issued", "Received"],
 };
 
 export const CategoryEnumValues = {
-  SEASON_TYPES: ["Spring", "Summer", "Autumn", "Winter", "Mid-Summer", "Mid-Winter","Mix"],
+  SEASON_TYPES: [
+    "Spring",
+    "Summer",
+    "Autumn",
+    "Winter",
+    "Mid-Summer",
+    "Mid-Winter",
+    "Mix",
+  ],
 };
-
-

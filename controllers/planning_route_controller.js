@@ -85,21 +85,24 @@ const getAllPlanningRoutes = asyncHandler(async (req, res) => {
 
   const allPlanningRoutesCount = await PlanningRoute.countDocuments(filter);
   const totalPages = Math.ceil(allPlanningRoutesCount / page_limit);
-  
+
   // Check if requested page exceeds total pages
   if (page > 1 && page > totalPages) {
-    throw createError(`Page ${page} does not exist. Maximum page is ${totalPages+1}`, 400);
+    throw createError(
+      `Page ${page} does not exist. Maximum page is ${totalPages + 1}`,
+      400
+    );
   }
 
   // Format response
   const formattedPlanningRoutes = planningRoutes.map((planningRoute) => ({
-      _id: planningRoute._id,
-      planning_route_name: planningRoute.planning_route_name,
-      planning_route_type: planningRoute.planning_route_type,
-      cost_per_meter: planningRoute.cost_per_meter,
-      lead_time_days: planningRoute.lead_time_days,
-      createdAt: planningRoute.createdAt,
-      updatedAt: planningRoute.updatedAt,
+    _id: planningRoute._id,
+    planning_route_name: planningRoute.planning_route_name,
+    planning_route_type: planningRoute.planning_route_type,
+    cost_per_meter: planningRoute.cost_per_meter,
+    lead_time_days: planningRoute.lead_time_days,
+    createdAt: planningRoute.createdAt,
+    updatedAt: planningRoute.updatedAt,
   }));
 
   const data = {
@@ -115,12 +118,16 @@ const getAllPlanningRoutes = asyncHandler(async (req, res) => {
     },
   };
 
-  return successResponse(
-    res,
-    "Planning routes fetched successfully",
-    data,
-  );
+  return successResponse(res, "Planning routes fetched successfully", data);
 });
+
+// @desc get all Planning Route without pagination
+// @route GET /api/planning-route/all
+// @access Private
+export const getAllPlanningRouteWithoutPagination = async (req, res) => {
+  const planningRoute = await PlanningRoute.find();
+  return successResponse(res, "Categorys fetched successfully", planningRoute);
+};
 
 // @desc    Get single planning route
 // @route   GET /api/planning-route/:id
@@ -159,12 +166,19 @@ const updatePlanningRoute = asyncHandler(async (req, res) => {
     throw createError("Planning route not found", 404);
   }
   // Check if any field other than cost_per_meter is present in the request body
-  const allowedFields = ['cost_per_meter', 'lead_time_days'];
+  const allowedFields = ["cost_per_meter", "lead_time_days"];
   const receivedFields = Object.keys(req.body);
-  const invalidFields = receivedFields.filter(field => !allowedFields.includes(field));
-  
+  const invalidFields = receivedFields.filter(
+    (field) => !allowedFields.includes(field)
+  );
+
   if (invalidFields.length > 0) {
-    throw createError(`Only 'cost_per_meter' and 'lead_time_days' fields can be updated. Invalid fields: ${invalidFields.join(', ')}`, 400);
+    throw createError(
+      `Only 'cost_per_meter' and 'lead_time_days' fields can be updated. Invalid fields: ${invalidFields.join(
+        ", "
+      )}`,
+      400
+    );
   }
 
   const { cost_per_meter, lead_time_days } = req.body;
@@ -175,10 +189,14 @@ const updatePlanningRoute = asyncHandler(async (req, res) => {
   if (cost_per_meter < 0) {
     throw createError("Cost per meter cannot be negative", 400);
   }
-  const updatedPlanningRoute = await PlanningRoute.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedPlanningRoute = await PlanningRoute.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
   if (!updatedPlanningRoute) {
     throw createError("Planning route not updated. Invalid data", 400);
   } else {
@@ -212,7 +230,7 @@ const deletePlanningRoute = asyncHandler(async (req, res) => {
   } else {
     return noContentResponse(
       res,
-      `Planning route with id ${req.params.id} deleted successfully`,
+      `Planning route with id ${req.params.id} deleted successfully`
     );
   }
 });

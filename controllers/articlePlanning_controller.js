@@ -5,19 +5,22 @@ import Article from "../models/article_modal.js";
 import PlanningRoute from "../models/planning_route_modal.js";
 import mongoose from "mongoose";
 import { getDifferenceDays } from "../utilies/date.js";
-import { articlePlanningEnumValues } from "../constant/enum_contants.js";
+import {
+  ARTICLE_ENUM_VALUES,
+  articlePlanningEnumValues,
+} from "../constant/enum_contants.js";
 
 // Helper function to validate date format
 const validateDateFormat = (dateString, fieldName) => {
   if (dateString && dateString.includes("/")) {
     throw createError(`${fieldName} must be in YYYY-MM-DD format`, 400);
   }
-  
+
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
     throw createError(`Invalid ${fieldName}`, 400);
   }
-  
+
   return date;
 };
 
@@ -82,7 +85,9 @@ export const createArticlePlanning = async (req, res) => {
     }
 
     // Check if planning route exists
-    const planningRoute = await PlanningRoute.findById(planningRoute_id).session(session);
+    const planningRoute = await PlanningRoute.findById(
+      planningRoute_id
+    ).session(session);
     if (!planningRoute) {
       throw createError("Planning route not found", 404);
     }
@@ -92,7 +97,7 @@ export const createArticlePlanning = async (req, res) => {
       article_id,
       planningRoute_id,
     }).session(session);
-    
+
     if (existingArticlePlanning) {
       throw createError("Article already assigned to this planning phase", 400);
     }
@@ -104,11 +109,16 @@ export const createArticlePlanning = async (req, res) => {
 
     const currentDate = new Date();
     const processEndDate = new Date(when_process_end);
-    const processStartDate = when_process_start ? new Date(when_process_start) : currentDate;
+    const processStartDate = when_process_start
+      ? new Date(when_process_start)
+      : currentDate;
 
     // Validate dates logic
     if (processEndDate <= currentDate) {
-      throw createError("Process end date must be greater than today's date", 400);
+      throw createError(
+        "Process end date must be greater than today's date",
+        400
+      );
     }
 
     if (processStartDate < currentDate) {
@@ -116,7 +126,10 @@ export const createArticlePlanning = async (req, res) => {
     }
 
     if (processEndDate <= processStartDate) {
-      throw createError("Process end date must be greater than process start date", 400);
+      throw createError(
+        "Process end date must be greater than process start date",
+        400
+      );
     }
 
     const processDays = getDifferenceDays(when_process_end);
@@ -129,16 +142,21 @@ export const createArticlePlanning = async (req, res) => {
     }
 
     // Create article planning
-    const articlePlanning = await ArticlePlanning.create([{
-      article_id,
-      planningRoute_id,
-      total_payment,
-      process_days: processDays,
-      when_process_end,
-      status,
-      when_process_start: when_process_start || currentDate,
-      planningName,
-    }], { session });
+    const articlePlanning = await ArticlePlanning.create(
+      [
+        {
+          article_id,
+          planningRoute_id,
+          total_payment,
+          process_days: processDays,
+          when_process_end,
+          status,
+          when_process_start: when_process_start || currentDate,
+          planningName,
+        },
+      ],
+      { session }
+    );
 
     // Update article status to 'underProcess' only if creation was successful
     if (article.status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[1]) {
@@ -148,7 +166,11 @@ export const createArticlePlanning = async (req, res) => {
 
     await session.commitTransaction();
 
-    return createdResponse(res, articlePlanning[0]);
+    return createdResponse(
+      res,
+      "Article Planning Created Successfully",
+      articlePlanning[0]
+    );
   } catch (error) {
     await session.abortTransaction();
     throw createError(error.message, error.status || 500);
@@ -176,7 +198,7 @@ const updateArticlePlanningStatus = async (articlePlanningItem) => {
   // Update status based on order slip
   if (articlePlanningItem.order_slip === "Received") {
     articlePlanningItem.status = articlePlanningEnumValues.STATUS_TYPES[2]; // "completed"
-    
+
     // Update associated article status
     const article = await Article.findById(articlePlanningItem.article_id);
     if (article && article.status !== ARTICLE_ENUM_VALUES.STATUS_TYPES[3]) {
@@ -203,7 +225,8 @@ export const getAllArticlePlannings = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
 
     // ✅ AND Logic: All query parameters must match
-    const { status, order_slip, search, article_id, planningRoute_id } = req.query;
+    const { status, order_slip, search, article_id, planningRoute_id } =
+      req.query;
 
     if (article_id) {
       validateObjectId(article_id, "article id");
@@ -224,16 +247,15 @@ export const getAllArticlePlannings = async (req, res) => {
     }
 
     if (search) {
-      filter.$or = [
-        { article_id: { $regex: search, $options: "i" } },
-        { planningRoute_id: { $regex: search, $options: "i" } },
-        { planningName: { $regex: search, $options: "i" } },
-      ];
+      filter.$or = [{ planningName: { $regex: search, $options: "i" } }];
     }
+
+    const skip = (page - 1) * page_limit;
 
     let articlePlannings = await ArticlePlanning.find(filter)
       .limit(page_limit)
-      .skip((page - 1) * page_limit);
+      .skip(skip)
+      .sort({ createdAt: -1 });
 
     // Update status for each article planning
     const updatedArticlePlannings = await Promise.all(
@@ -242,14 +264,39 @@ export const getAllArticlePlannings = async (req, res) => {
 
     // Save any changes to the database
     await Promise.all(
-      updatedArticlePlannings.map(ap => ap.isModified() ? ap.save() : Promise.resolve())
+      updatedArticlePlannings.map((ap) =>
+        ap.isModified() ? ap.save() : Promise.resolve()
+      )
     );
+
+    const allArticlesCount = await ArticlePlanning.countDocuments(filter);
+    const totalPages = Math.ceil(allArticlesCount / page_limit);
+
+    if (page > 1 && page > totalPages) {
+      throw createError(
+        `Page ${page} does not exist. Maximum page is ${totalPages + 1}`,
+        400
+      );
+    }
+
+    const data = {
+      result: updatedArticlePlannings,
+      totalCount: allArticlesCount,
+      pagination: {
+        current_page: page,
+        page_limit: page_limit,
+        total_pages: Math.ceil(allArticlesCount / page_limit),
+        total_items: allArticlesCount,
+        isNext: page < Math.ceil(allArticlesCount / page_limit),
+        isPrev: page > 1,
+      },
+    };
 
     return sendResponse(
       res,
       200,
       "Article Planning fetched successfully",
-      updatedArticlePlannings
+      data
     );
   } catch (error) {
     throw createError(error.message, 500);
@@ -270,7 +317,7 @@ export const getArticlePlanningById = async (req, res) => {
 
     // Update status based on current conditions
     articlePlanning = await updateArticlePlanningStatus(articlePlanning);
-    
+
     if (articlePlanning.isModified()) {
       await articlePlanning.save();
     }
@@ -315,12 +362,12 @@ export const updateArticlePlanning = async (req, res) => {
       total_payment,
       when_process_end,
       when_process_start,
-      planningName
+      planningName,
     } = req.body;
 
     // List of allowed fields to update
     const allowedUpdates = {};
-    
+
     // Validate and add order_slip if provided
     if (order_slip) {
       if (!articlePlanningEnumValues.ORDER_SLIP_TYPES.includes(order_slip)) {
@@ -349,11 +396,11 @@ export const updateArticlePlanning = async (req, res) => {
     if (when_process_end) {
       validateDateFormat(when_process_end, "Process end date");
       const processEndDate = new Date(when_process_end);
-      
+
       if (processEndDate <= new Date()) {
         throw createError("Process end date must be in the future", 400);
       }
-      
+
       allowedUpdates.when_process_end = when_process_end;
       allowedUpdates.process_days = getDifferenceDays(when_process_end);
     }
@@ -361,18 +408,21 @@ export const updateArticlePlanning = async (req, res) => {
     if (when_process_start) {
       validateDateFormat(when_process_start, "Process start date");
       const processStartDate = new Date(when_process_start);
-      
+
       if (processStartDate < new Date()) {
         throw createError("Process start date cannot be in the past", 400);
       }
-      
+
       allowedUpdates.when_process_start = when_process_start;
     }
 
     // Validate planningName if provided
     if (planningName) {
       if (planningName.length < 3) {
-        throw createError("Planning name must be at least 3 characters long", 400);
+        throw createError(
+          "Planning name must be at least 3 characters long",
+          400
+        );
       }
       allowedUpdates.planningName = planningName;
     }
@@ -387,14 +437,20 @@ export const updateArticlePlanning = async (req, res) => {
     let articleUpdateRequired = false;
 
     // If order_slip is being updated to "Received", automatically update status to "completed"
-    if (order_slip === "Received" && articlePlanning.order_slip !== "Received") {
+    if (
+      order_slip === "Received" &&
+      articlePlanning.order_slip !== "Received"
+    ) {
       allowedUpdates.status = articlePlanningEnumValues.STATUS_TYPES[2]; // "completed"
       statusChanged = true;
       articleUpdateRequired = true;
     }
 
     // If order_slip is being updated to "Issued" and current status is "completed", revert to "in progress"
-    if (order_slip === "Issued" && articlePlanning.status === articlePlanningEnumValues.STATUS_TYPES[2]) {
+    if (
+      order_slip === "Issued" &&
+      articlePlanning.status === articlePlanningEnumValues.STATUS_TYPES[2]
+    ) {
       allowedUpdates.status = articlePlanningEnumValues.STATUS_TYPES[1]; // "in progress"
       statusChanged = true;
       articleUpdateRequired = true;
@@ -404,16 +460,18 @@ export const updateArticlePlanning = async (req, res) => {
     const updatedArticlePlanning = await ArticlePlanning.findByIdAndUpdate(
       id,
       { $set: allowedUpdates },
-      { 
+      {
         new: true, // Return updated document
         runValidators: true,
-        session 
+        session,
       }
     );
 
     // Update associated article status if required
     if (articleUpdateRequired) {
-      const article = await Article.findById(updatedArticlePlanning.article_id).session(session);
+      const article = await Article.findById(
+        updatedArticlePlanning.article_id
+      ).session(session);
       if (article) {
         if (order_slip === "Received") {
           // When order slip is received, mark article as completed
@@ -430,7 +488,7 @@ export const updateArticlePlanning = async (req, res) => {
     if (allowedUpdates.when_process_end) {
       const currentDate = new Date();
       const processEndDate = new Date(updatedArticlePlanning.when_process_end);
-      
+
       if (processEndDate < currentDate) {
         updatedArticlePlanning.late = true;
       } else {
@@ -495,7 +553,10 @@ export const updateOrderSlip = async (req, res) => {
       // When order slip is received, automatically complete the planning
       updateData.status = articlePlanningEnumValues.STATUS_TYPES[2]; // "completed"
       articleUpdateRequired = true;
-    } else if (order_slip === "Issued" && articlePlanning.status === articlePlanningEnumValues.STATUS_TYPES[2]) {
+    } else if (
+      order_slip === "Issued" &&
+      articlePlanning.status === articlePlanningEnumValues.STATUS_TYPES[2]
+    ) {
       // When re-issuing order slip from completed state, revert to in progress
       updateData.status = articlePlanningEnumValues.STATUS_TYPES[1]; // "in progress"
       articleUpdateRequired = true;
@@ -505,16 +566,18 @@ export const updateOrderSlip = async (req, res) => {
     const updatedArticlePlanning = await ArticlePlanning.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { 
+      {
         new: true,
         runValidators: true,
-        session 
+        session,
       }
     );
 
     // Update associated article status if required
     if (articleUpdateRequired) {
-      const article = await Article.findById(updatedArticlePlanning.article_id).session(session);
+      const article = await Article.findById(
+        updatedArticlePlanning.article_id
+      ).session(session);
       if (article) {
         if (order_slip === "Received") {
           article.status = ARTICLE_ENUM_VALUES.STATUS_TYPES[3]; // "completed"
@@ -596,14 +659,18 @@ export const deleteArticlePlanning = async (req, res) => {
     validateObjectId(id, "article planning id");
 
     // Find and delete article planning
-    const deletedArticlePlanning = await ArticlePlanning.findByIdAndDelete(id).session(session);
-    
+    const deletedArticlePlanning = await ArticlePlanning.findByIdAndDelete(
+      id
+    ).session(session);
+
     if (!deletedArticlePlanning) {
       throw createError("Article planning not found", 404);
     }
 
     // Update associated article status to 'draft' if it was 'underProcess'
-    const article = await Article.findById(deletedArticlePlanning.article_id).session(session);
+    const article = await Article.findById(
+      deletedArticlePlanning.article_id
+    ).session(session);
     if (article && article.status === ARTICLE_ENUM_VALUES.STATUS_TYPES[1]) {
       article.status = ARTICLE_ENUM_VALUES.STATUS_TYPES[0]; // Set to 'draft'
       await article.save({ session });

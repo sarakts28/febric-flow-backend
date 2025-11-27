@@ -24,8 +24,8 @@ router.use(protect, adminAndDesigner);
 
 router.post("/", createArticlePlanning);
 router.patch("/:id", updateArticlePlanning);
-router.get("/:id/order-slip", updateOrderSlip); 
-router.get("/:id/status", updateStatus); // Assuming this is for raw data
+router.patch("/:id/order-slip", updateOrderSlip);
+router.patch("/:id/status", updateStatus); // Assuming this is for raw data
 router.get("/", getAllArticlePlannings);
 router.get("/:id", getArticlePlanningById);
 router.delete("/:id", deleteArticlePlanning);
