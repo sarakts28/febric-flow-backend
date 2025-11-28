@@ -22,7 +22,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["https://febric-flow-fe.netlify.app"],
+    origin: ["https://febric-flow-fe.netlify.app", "http://localhost:5173"],
     credentials: true,
   })
 );
