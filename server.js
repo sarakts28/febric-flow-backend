@@ -1,6 +1,6 @@
 import express from "express";
 import endPoints from "./endpoints.js";
-import { configDotenv } from "dotenv";
+import dotenv from "dotenv";
 import errorHandleMiddleware from "./middleware/errorMiddleWare.js";
 import validationErrorHandler from "./middleware/validationMiddleware.js";
 import connectDB from "./config/db.js";
@@ -13,7 +13,7 @@ import {
 } from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-configDotenv();
+dotenv.config();
 connectDB();
 
 const port = process.env.PORT || 5000; // Add default port
