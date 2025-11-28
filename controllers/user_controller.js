@@ -149,8 +149,19 @@ const refreshToken = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
-  res.cookie("accessToken", "", { maxAge: 1 });
-  res.cookie("refreshToken", "", { maxAge: 1 });
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    path: "/",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    path: "/",
+  });
   res.status(200).json({
     success: true,
     message: "User logged out successfully",
