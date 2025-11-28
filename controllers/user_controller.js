@@ -5,7 +5,7 @@ import createError from "../utilies/errorHandle.js";
 import {
   generateAuthToken,
   generateRefreshToken,
-} from "../utilies/generateToken.js"; 
+} from "../utilies/generateToken.js";
 import jwt from "jsonwebtoken";
 
 // @desc    Register new user
@@ -89,16 +89,16 @@ const login = asyncHandler(async (req, res) => {
   // Set refresh token as HTTP-only cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   // ✅ ALSO set access token as HTTP-only cookie
   res.cookie("accessToken", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
     maxAge: 1 * 60 * 60 * 1000, // 1 hour
   });
 
@@ -132,8 +132,8 @@ const refreshToken = asyncHandler(async (req, res) => {
     // ✅ Set the new access token as cookie
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
