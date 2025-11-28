@@ -20,23 +20,9 @@ const port = process.env.PORT || 5000; // Add default port
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://febric-flow-fe.netlify.app/",
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: ["https://febric-flow-fe.netlify.app"],
     credentials: true,
   })
 );
